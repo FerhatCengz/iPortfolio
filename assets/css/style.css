@@ -232,12 +232,6 @@ h6 {
   background-size: cover;
 }
 
-@media screen and (max-width: 720px) {
-  #hero {
-    width: 100%;
-    height:100%;
-  }
-}
 #hero:before {
   content: "";
   background: rgba(5, 13, 24, 0.3);
@@ -247,6 +241,18 @@ h6 {
   left: 0;
   right: 0;
   z-index: 1;
+}
+
+@media screen and (max-width: 720px) {
+  #hero {
+    width: 100%;
+    height: 100%;
+  }
+  #hero:before {
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 13, 24, 0);
+  }
 }
 
 #hero .hero-container {
@@ -1113,4 +1119,22 @@ section {
     width: auto;
     padding-right: 20px 15px;
   }
+}
+
+#divOrtala {
+  width: 100px;
+
+  height: 100px;
+
+  background-color: #567;
+
+  position: absolute;
+
+  left: 50%;
+
+  top: 50%;
+
+  margin-left: -50px;
+
+  margin-top: -50px;
 }
